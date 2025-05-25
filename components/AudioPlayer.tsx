@@ -1,9 +1,15 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { transcribeAudio } from "@/services/transcribe";
 import { useAudioPlayer } from "expo-audio";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface AudioPlayerComponentProps {
   audioSource: string;
@@ -16,6 +22,11 @@ export function AudioPlayerComponent({
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
+
+  const [transcription, setTranscription] = useState<string>("");
+  const [isTranscribing, setIsTranscribing] = useState(true);
+  const [transcriptionError, setTranscriptionError] = useState<string>("");
+
   const tintColor = useThemeColor({}, "icon");
 
   useEffect(() => {
@@ -33,6 +44,27 @@ export function AudioPlayerComponent({
       subscription?.remove();
     };
   }, [player]);
+
+  // Automatically transcribe the audio when component mounts
+  useEffect(() => {
+    const transcribeCurrentAudio = async () => {
+      try {
+        setIsTranscribing(true);
+        setTranscriptionError("");
+        const result = await transcribeAudio(audioSource);
+        setTranscription(result);
+      } catch (error) {
+        console.error("Error transcribing audio:", error);
+        setTranscriptionError(
+          error instanceof Error ? error.message : "Failed to transcribe audio"
+        );
+      } finally {
+        setIsTranscribing(false);
+      }
+    };
+
+    transcribeCurrentAudio();
+  }, [audioSource]);
 
   const togglePlayback = async () => {
     try {
@@ -88,6 +120,25 @@ export function AudioPlayerComponent({
           />
         </View>
       </View>
+
+      {/* Transcription Section */}
+      <View style={styles.transcriptionContainer}>
+        <ThemedText style={styles.transcriptionTitle}>Transcription</ThemedText>
+        {isTranscribing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={tintColor} />
+            <ThemedText style={styles.loadingText}>
+              Transcribing audio...
+            </ThemedText>
+          </View>
+        ) : transcriptionError ? (
+          <ThemedText style={styles.errorText}>{transcriptionError}</ThemedText>
+        ) : (
+          <ThemedText style={styles.transcriptionText}>
+            {transcription}
+          </ThemedText>
+        )}
+      </View>
     </ThemedView>
   );
 }
@@ -133,5 +184,36 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     borderRadius: 2,
+  },
+  transcriptionContainer: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 6,
+    backgroundColor: "rgba(128, 128, 128, 0.1)",
+  },
+  transcriptionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  transcriptionText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#ff4444",
+    fontStyle: "italic",
   },
 });
