@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "nutrition-agent",
-    "slug": "nutrition-agent",
+    "name": "my-secretary-agent",
+    "slug": "my-secretary-agent",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
