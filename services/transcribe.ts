@@ -8,7 +8,7 @@ import Constants from "expo-constants";
  */
 export async function transcribeAudio(audioFileUri: string): Promise<string> {
   const formData = new FormData();
-  formData.append("file", {
+  formData.append("audio", {
     uri: audioFileUri,
     name: "audio.wav", // or the correct file name and extension
     type: "audio/wav", // or the correct mime type
@@ -27,5 +27,5 @@ export async function transcribeAudio(audioFileUri: string): Promise<string> {
     },
   });
 
-  return response.data.text;
+  return response.data.transcript;
 }
