@@ -19,10 +19,9 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-    },
-    web: {
+    },    web: {
       bundler: "metro",
-      output: "static",
+      output: "server",
       favicon: "./assets/images/favicon.png",
     },
     plugins: [

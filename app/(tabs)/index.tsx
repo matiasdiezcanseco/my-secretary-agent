@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { Alert, Button, StyleSheet } from "react-native";
 
 import { AudioPlayerComponent } from "@/components/AudioPlayer";
+import { Chat } from "@/components/Chat";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedView } from "@/components/ThemedView";
 import { AudioModule, RecordingPresets, useAudioRecorder } from "expo-audio";
@@ -51,6 +52,7 @@ export default function HomeScreen() {
         />
 
         {audioSource && <AudioPlayerComponent audioSource={audioSource} />}
+        <Chat />
       </ThemedView>
     </ParallaxScrollView>
   );
