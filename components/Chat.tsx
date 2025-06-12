@@ -1,26 +1,38 @@
 import { generateAPIUrl } from "@/utils/generate-api-url";
 import { useChat } from "@ai-sdk/react";
 import { fetch as expoFetch } from "expo/fetch";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { ScrollView, TextInput, View } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { ThemedView } from "./ThemedView";
 
 export function Chat() {
-  const { messages, error, handleInputChange, input, handleSubmit } = useChat({
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const { messages, handleInputChange, input, handleSubmit } = useChat({
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     api: generateAPIUrl("/api/chat"),
     onError: (error) => console.error(error, "ERROR"),
   });
 
-  if (error) return <Text>{error.message}</Text>;
-
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (scrollViewRef.current && messages.length > 0) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
   return (
     <ThemedView
       style={{
-        paddingHorizontal: 8,
+        flex: 1,
       }}
     >
-      <ScrollView style={{ flex: 1, maxHeight: "100%" }}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={{ paddingHorizontal: 8 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
+      >
         {messages.map((m) => (
           <View key={m.id} style={{ marginVertical: 8 }}>
             <View>
@@ -30,10 +42,13 @@ export function Chat() {
           </View>
         ))}
       </ScrollView>
-
-      <View style={{ marginTop: 8 }}>
+      <View style={{ marginTop: 8, paddingHorizontal: 8 }}>
         <TextInput
-          style={{ backgroundColor: "white", padding: 8 }}
+          style={{
+            backgroundColor: "white",
+            padding: 12,
+            borderRadius: 8,
+          }}
           placeholder="Say something..."
           value={input}
           onChange={(e) =>
@@ -50,6 +65,7 @@ export function Chat() {
             e.preventDefault();
           }}
           autoFocus={true}
+          textAlignVertical="top"
         />
       </View>
     </ThemedView>
