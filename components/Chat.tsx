@@ -20,7 +20,7 @@ export function Chat() {
         paddingHorizontal: 8,
       }}
     >
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, maxHeight: "100%" }}>
         {messages.map((m) => (
           <View key={m.id} style={{ marginVertical: 8 }}>
             <View>
