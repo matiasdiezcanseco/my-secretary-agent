@@ -13,7 +13,7 @@ export const addFood = mutation({
     name: v.string(),
     quantity: v.number(),
     date: v.string(),
-    unit: v.string(),
+    unit: v.union(v.literal("g"), v.literal("lb"), v.literal("oz")),
   },
   handler: async (ctx, args) => {
     const newTaskId = await ctx.db.insert("foods", { ...args });
