@@ -24,7 +24,7 @@ export function Chat() {
   const tintColor = useThemeColor({}, "tint");
   const backgroundColor = useThemeColor({}, "background");
 
-  const { messages, handleInputChange, input, handleSubmit } = useChat({
+  const { messages, handleInputChange, input, handleSubmit, status } = useChat({
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     api: generateAPIUrl("/api/chat"),
     onError: (error) => console.error(error, "ERROR"),
@@ -66,6 +66,11 @@ export function Chat() {
             </View>
           </View>
         ))}
+        {status === "submitted" && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="small" color={tintColor} />
+          </View>
+        )}
       </ScrollView>
       <View style={styles.inputWrapper}>
         <ThemedView style={[styles.inputRow, { borderColor: iconColor }]}>
@@ -187,5 +192,9 @@ const styles = StyleSheet.create({
     padding: 8,
     marginHorizontal: 4,
     borderRadius: 20,
+  },
+  loaderContainer: {
+    alignItems: "center",
+    marginVertical: 8,
   },
 });
