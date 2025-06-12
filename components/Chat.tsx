@@ -1,5 +1,4 @@
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { transcribeAudio } from "@/services/transcribe";
 import { generateAPIUrl } from "@/utils/generate-api-url";
 import { useChat } from "@ai-sdk/react";
 import { AudioModule, RecordingPresets, useAudioRecorder } from "expo-audio";
@@ -27,9 +26,43 @@ export function Chat() {
     api: generateAPIUrl("/api/chat"),
     onError: (error) => console.error(error, "ERROR"),
   });
-
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const iconColor = useThemeColor({}, "icon");
+
+  // Function to transcribe audio using the local API
+  const transcribeAudioFile = async (audioUri: string): Promise<string> => {
+    try {
+      const response = await fetch(audioUri);
+      const audioBlob = await response.blob();
+
+      console.log(
+        `Audio blob size: ${audioBlob.size} bytes, type: ${audioBlob.type}`
+      );
+
+      const transcribeResponse = await expoFetch(
+        generateAPIUrl("/api/transcribe"),
+        {
+          method: "POST",
+          body: audioBlob,
+          headers: {
+            "Content-Type": "audio/mpeg",
+          },
+        }
+      );
+
+      if (!transcribeResponse.ok) {
+        throw new Error(
+          `Transcription failed: ${transcribeResponse.statusText}`
+        );
+      }
+
+      const transcription = await transcribeResponse.text();
+      return transcription.trim();
+    } catch (error) {
+      console.error("Error transcribing audio:", error);
+      throw error;
+    }
+  };
 
   // Request recording permissions on mount
   useEffect(() => {
@@ -68,7 +101,7 @@ export function Chat() {
         setIsTranscribing(true);
         try {
           // Transcribe the audio and set it as input
-          const transcription = await transcribeAudio(audioRecorder.uri);
+          const transcription = await transcribeAudioFile(audioRecorder.uri);
           handleInputChange({
             target: { value: transcription },
           } as any);
