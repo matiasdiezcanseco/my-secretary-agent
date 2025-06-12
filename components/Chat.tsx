@@ -1,170 +1,81 @@
+import { useAudioRecording } from "@/hooks/useAudioRecording";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { generateAPIUrl } from "@/utils/generate-api-url";
 import { useChat } from "@ai-sdk/react";
-import { AudioModule, RecordingPresets, useAudioRecorder } from "expo-audio";
 import { fetch as expoFetch } from "expo/fetch";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
-  TextInput,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
+import { ThemedMarkdown } from "./ThemedMarkdown";
 import { ThemedText } from "./ThemedText";
+import { ThemedTextInput } from "./ThemedTextInput";
 import { ThemedView } from "./ThemedView";
 import { IconSymbol } from "./ui/IconSymbol";
 
 export function Chat() {
   const scrollViewRef = useRef<ScrollView>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
 
-  const { messages, handleInputChange, input, handleSubmit } = useChat({
+  const iconColor = useThemeColor({}, "icon");
+  const tintColor = useThemeColor({}, "tint");
+  const backgroundColor = useThemeColor({}, "background");
+
+  const { messages, handleInputChange, input, handleSubmit, status } = useChat({
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     api: generateAPIUrl("/api/chat"),
     onError: (error) => console.error(error, "ERROR"),
   });
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const iconColor = useThemeColor({}, "icon");
 
-  // Function to transcribe audio using the local API
-  const transcribeAudioFile = async (audioUri: string): Promise<string> => {
-    try {
-      const response = await fetch(audioUri);
-      const audioBlob = await response.blob();
+  const { isRecording, isTranscribing, toggleRecording } = useAudioRecording({
+    onTranscription: (transcription: string) => {
+      handleInputChange({
+        target: { value: transcription },
+      } as any);
+    },
+  });
 
-      console.log(
-        `Audio blob size: ${audioBlob.size} bytes, type: ${audioBlob.type}`
-      );
-
-      const transcribeResponse = await expoFetch(
-        generateAPIUrl("/api/transcribe"),
-        {
-          method: "POST",
-          body: audioBlob,
-          headers: {
-            "Content-Type": "audio/mpeg",
-          },
-        }
-      );
-
-      if (!transcribeResponse.ok) {
-        throw new Error(
-          `Transcription failed: ${transcribeResponse.statusText}`
-        );
-      }
-
-      const transcription = await transcribeResponse.text();
-      return transcription.trim();
-    } catch (error) {
-      console.error("Error transcribing audio:", error);
-      throw error;
-    }
-  };
-
-  // Request recording permissions on mount
-  useEffect(() => {
-    (async () => {
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      if (!status.granted) {
-        Alert.alert("Permission to access microphone was denied");
-      }
-    })();
-  }, []);
-
-  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     if (scrollViewRef.current && messages.length > 0) {
       scrollViewRef.current.scrollToEnd({ animated: true });
     }
   }, [messages]);
 
-  const startRecording = async () => {
-    try {
-      await audioRecorder.prepareToRecordAsync();
-      audioRecorder.record();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Error starting recording:", error);
-      Alert.alert("Error", "Failed to start recording");
-    }
-  };
-  const stopRecording = async () => {
-    try {
-      await audioRecorder.stop();
-      setIsRecording(false);
-
-      if (audioRecorder.uri) {
-        // Show transcribing state
-        setIsTranscribing(true);
-        try {
-          // Transcribe the audio and set it as input
-          const transcription = await transcribeAudioFile(audioRecorder.uri);
-          handleInputChange({
-            target: { value: transcription },
-          } as any);
-        } finally {
-          setIsTranscribing(false);
-        }
-      }
-    } catch (error) {
-      console.error("Error stopping recording:", error);
-      Alert.alert("Error", "Failed to process recording");
-      setIsTranscribing(false);
-    }
-  };
-
-  const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
-
   const sendMessage = (e: any) => {
     if (input.trim()) {
       handleSubmit(e);
     }
   };
+
   return (
-    <ThemedView
-      style={{
-        flex: 1,
-      }}
-    >
+    <ThemedView style={styles.container}>
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={{ paddingHorizontal: 8 }}
+        contentContainerStyle={styles.scrollViewContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={true}
       >
         {messages.map((m) => (
-          <View key={m.id} style={{ marginVertical: 8 }}>
+          <View key={m.id} style={styles.messageContainer}>
             <View>
-              <ThemedText style={{ fontWeight: 700 }}>{m.role}</ThemedText>
-              <ThemedText>{m.content}</ThemedText>
+              <ThemedText style={styles.roleText}>{m.role}</ThemedText>
+              <ThemedMarkdown>{m.content}</ThemedMarkdown>
             </View>
           </View>
         ))}
+        {status === "submitted" && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="small" color={tintColor} />
+          </View>
+        )}
       </ScrollView>
-      <View style={{ marginTop: 8, paddingHorizontal: 8 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "white",
-            borderRadius: 8,
-            paddingRight: 4,
-          }}
-        >
-          <TextInput
-            style={{
-              flex: 1,
-              padding: 12,
-            }}
+      <View style={styles.inputWrapper}>
+        <ThemedView style={[styles.inputRow, { borderColor: iconColor }]}>
+          <ThemedTextInput
+            style={[styles.textInput]}
             placeholder={
               isTranscribing ? "Transcribing audio..." : "Say something..."
             }
@@ -188,53 +99,102 @@ export function Chat() {
           />
           <TouchableOpacity
             onPress={toggleRecording}
-            style={{
-              padding: 8,
-              marginHorizontal: 4,
-              borderRadius: 20,
-              backgroundColor: isRecording ? "#ff4444" : "#f0f0f0",
-            }}
+            style={[
+              styles.micButton,
+              {
+                backgroundColor: isRecording ? tintColor : backgroundColor,
+              },
+            ]}
             disabled={isTranscribing}
           >
             <IconSymbol
               name="mic.fill"
               size={20}
-              color={isRecording ? "white" : iconColor}
+              color={isRecording ? backgroundColor : iconColor}
             />
           </TouchableOpacity>
           {isTranscribing && (
-            <View
-              style={{
-                padding: 8,
-                marginHorizontal: 4,
-                borderRadius: 20,
-                backgroundColor: "#4CAF50",
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View style={styles.transcribingIndicator}>
               <ActivityIndicator size="small" color="white" />
             </View>
           )}
-          <TouchableOpacity
-            onPress={sendMessage}
-            style={{
-              padding: 8,
-              marginHorizontal: 4,
-              borderRadius: 20,
-              backgroundColor:
-                input.trim() && !isTranscribing ? iconColor : "#f0f0f0",
-            }}
-            disabled={!input.trim() || isTranscribing}
-          >
-            <IconSymbol
-              name="paperplane.fill"
-              size={20}
-              color={input.trim() && !isTranscribing ? "white" : "#ccc"}
-            />
-          </TouchableOpacity>
-        </View>
+          {!isTranscribing && (
+            <TouchableOpacity
+              onPress={sendMessage}
+              style={[
+                styles.sendButton,
+                {
+                  backgroundColor:
+                    input.trim() && !isTranscribing
+                      ? tintColor
+                      : backgroundColor,
+                },
+              ]}
+              disabled={!input.trim() || isTranscribing}
+            >
+              <IconSymbol
+                name="paperplane.fill"
+                size={20}
+                color={
+                  input.trim() && !isTranscribing ? backgroundColor : iconColor
+                }
+              />
+            </TouchableOpacity>
+          )}
+        </ThemedView>
       </View>
     </ThemedView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 8,
+  },
+  messageContainer: {
+    marginVertical: 8,
+  },
+  roleText: {
+    fontWeight: "700",
+  },
+  inputWrapper: {
+    marginTop: 8,
+    paddingHorizontal: 8,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    paddingVertical: 4,
+  },
+  textInput: {
+    flex: 1,
+    padding: 12,
+  },
+  micButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  transcribingIndicator: {
+    padding: 8,
+    marginHorizontal: 4,
+    borderRadius: 20,
+    backgroundColor: "#4CAF50",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  sendButton: {
+    padding: 8,
+    marginHorizontal: 4,
+    borderRadius: 20,
+  },
+  loaderContainer: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+});
