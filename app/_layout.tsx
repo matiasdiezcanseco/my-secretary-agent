@@ -1,3 +1,4 @@
+import "@/utils/pollyfils";
 import {
   DarkTheme,
   DefaultTheme,

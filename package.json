@@ -11,10 +11,15 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.3.22",
+    "@ai-sdk/react": "^1.2.12",
     "@expo/vector-icons": "^14.1.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@stardazed/streams-text-encoding": "^1.0.2",
+    "@ungap/structured-clone": "^1.3.0",
+    "ai": "^4.3.16",
     "axios": "^1.9.0",
     "dotenv": "^16.5.0",
     "expo": "~53.0.9",
@@ -39,7 +44,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
     "react-native-web": "~0.20.0",
-    "react-native-webview": "13.13.5"
+    "react-native-webview": "13.13.5",
+    "zod": "^3.25.62"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
