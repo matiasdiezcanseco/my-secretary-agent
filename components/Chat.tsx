@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ThemedMarkdown } from "./ThemedMarkdown";
 import { ThemedText } from "./ThemedText";
 import { ThemedTextInput } from "./ThemedTextInput";
 import { ThemedView } from "./ThemedView";
@@ -61,7 +62,7 @@ export function Chat() {
           <View key={m.id} style={styles.messageContainer}>
             <View>
               <ThemedText style={styles.roleText}>{m.role}</ThemedText>
-              <ThemedText>{m.content}</ThemedText>
+              <ThemedMarkdown>{m.content}</ThemedMarkdown>
             </View>
           </View>
         ))}
