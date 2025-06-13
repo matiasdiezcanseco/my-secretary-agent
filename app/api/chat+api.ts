@@ -3,6 +3,7 @@ import { streamText } from "ai";
 import {
   addEatenFood,
   addIngredient,
+  getAllEatenFoods,
   getCurrentIsoTime,
   getCurrentLocalTime,
   getIngredientByName,
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
         getCurrentLocalTime,
         getIngredientByName,
         addIngredient,
+        getAllEatenFoods,
       },
     });
     return result.toDataStreamResponse({

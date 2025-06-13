@@ -27,6 +27,28 @@ export const getCurrentLocalTime = tool({
   },
 });
 
+export const getAllEatenFoods = tool({
+  description: "Get all eaten foods",
+  parameters: z.object({}).describe("No parameters needed"),
+  execute: async () => {
+    try {
+      const foods = await convex.query(api.foods.getAllFoods);
+      return {
+        success: true,
+        message: "Fetched all eaten foods successfully.",
+        foods,
+      };
+    } catch (e) {
+      console.error("Error fetching all eaten foods:", e);
+      return {
+        success: false,
+        message: `Failed to fetch all eaten foods. Error: ${e instanceof Error ? e.message : "Unknown error"}`,
+        error: e instanceof Error ? e.message : "Unknown error",
+      };
+    }
+  },
+});
+
 export const getFoodNutritionalInformation = tool({
   description: "Get nutritional information for a food item by its ID",
   parameters: z.object({
@@ -116,7 +138,7 @@ export const addIngredient = tool({
     try {
       const ingredientId = await convex.mutation(
         api.ingredients.addIngredient,
-        args
+        { ...args, name: args.name.toLowerCase() }
       );
 
       return {
