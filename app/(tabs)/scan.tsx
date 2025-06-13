@@ -3,8 +3,10 @@ import { Button, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { generateAPIUrl } from "@/utils/generate-api-url";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
-import { useState } from "react";
+import { fetch as expoFetch } from "expo/fetch";
+import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ScanScreen() {
@@ -13,10 +15,23 @@ export default function ScanScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [barcode, setBarcode] = useState<string | null>(null);
+  const [data, setData] = useState<any>(null);
 
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
+
+  useEffect(() => {
+    const getData = async () => {
+      const data = await expoFetch(generateAPIUrl(`/api/scan?id=${barcode}`), {
+        method: "GET",
+      });
+      setData(await data.json());
+    };
+    if (barcode) {
+      getData();
+    }
+  }, [barcode]);
 
   if (!permission || !permission.granted) {
     // Camera permissions are not granted yet.
@@ -88,6 +103,7 @@ export default function ScanScreen() {
             setBarcode(null);
           }}
         />
+        <ThemedText>{JSON.stringify(data)}</ThemedText>
       </ThemedView>
     </SafeAreaView>
   );

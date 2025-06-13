@@ -27,6 +27,34 @@ export const getCurrentLocalTime = tool({
   },
 });
 
+export const getFoodNutritionalInformation = tool({
+  description: "Get nutritional information for a food item by its ID",
+  parameters: z.object({
+    id: z
+      .string()
+      .describe("The ID of the food item to get nutritional information for"),
+  }),
+  execute: async ({ id }) => {
+    const apiUrl = `https://world.openfoodfacts.org/api/v0/product/${id}.json`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: `Failed to fetch nutritional information for food ID ${id}. Status: ${response.status}`,
+      };
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      message: `Fetched nutritional information for food ID ${id}.`,
+      nutritionalInfo: data,
+    };
+  },
+});
+
 export const addEatenFood = tool({
   description: "Add a food item to the list of eaten foods",
   parameters: z.object({
