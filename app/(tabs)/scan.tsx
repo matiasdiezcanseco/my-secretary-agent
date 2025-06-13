@@ -1,5 +1,6 @@
-import { Button, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 
+import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useAddIngredient } from "@/hooks/useAddIngredient";
@@ -15,7 +16,9 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [barcode, setBarcode] = useState<string | null>(null);
 
-  const { data: ingredientData } = useGetIngredientByBarcode({ barcode });
+  const { data: ingredientData, isLoading: ingredientDataLoading } =
+    useGetIngredientByBarcode({ barcode });
+
   const {
     mutate: addIngredient,
     isPending: addIngredientPending,
@@ -26,61 +29,63 @@ export default function ScanScreen() {
   const iconColor = useThemeColor({}, "icon");
   const backgroundColor = useThemeColor({}, "background");
 
+  const handleBarcodeScanned = (barcode: { data: string }) => {
+    setBarcode(barcode.data);
+  };
+
+  const handleAddIngredient = () => {
+    if (ingredientData && ingredientsSchema.safeParse(ingredientData).success) {
+      addIngredient(ingredientData);
+    }
+  };
+
+  const handleScanAgain = () => {
+    resetAddIngredient();
+    setBarcode(null);
+  };
+
   if (!permission || !permission.granted) {
     return (
-      <View style={styles.container}>
-        <ThemedText style={styles.message}>
-          We need your permission to show the camera
-        </ThemedText>
-        <Button onPress={requestPermission} title="grant permission" />
-      </View>
-    );
-  }
-
-  if (!barcode) {
-    return (
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: backgroundColor }}
+        style={[styles.flex1, { backgroundColor: backgroundColor }]}
         edges={["top", "left", "right", "bottom"]}
       >
-        <View style={styles.container}>
-          <CameraView
-            style={styles.camera}
-            facing={facing}
-            onBarcodeScanned={(barcode) => {
-              setBarcode(barcode.data);
-            }}
-            barcodeScannerSettings={{
-              barcodeTypes: [
-                "aztec",
-                "ean13",
-                "ean8",
-                "qr",
-                "pdf417",
-                "upc_e",
-                "datamatrix",
-                "code39",
-                "code93",
-                "itf14",
-                "codabar",
-                "code128",
-                "upc_a",
-              ],
-            }}
-          ></CameraView>
+        <View style={[styles.container, styles.justifyCenter]}>
+          <ThemedText style={styles.message}>
+            We need your permission to show the camera
+          </ThemedText>
+          <ThemedButton onPress={requestPermission} title="Grant permission" />
         </View>
       </SafeAreaView>
     );
   }
 
+  if (!barcode) {
+    return (
+      <CameraView
+        style={styles.camera}
+        facing={facing}
+        onBarcodeScanned={handleBarcodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ["ean13", "upc_a", "upc_e", "ean8"],
+        }}
+      ></CameraView>
+    );
+  }
+
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: backgroundColor }}
-      edges={["top", "left", "right", "bottom"]}
+      style={[styles.flex1, { backgroundColor: backgroundColor }]}
+      edges={["top", "left", "right"]}
     >
       <ThemedView style={styles.container}>
-        <ScrollView style={{ marginTop: 16 }}>
-          {ingredientData ? (
+        <ScrollView style={styles.scrollView}>
+          {ingredientDataLoading && (
+            <ThemedText style={styles.loadingText}>
+              Loading ingredient...
+            </ThemedText>
+          )}
+          {!ingredientDataLoading && ingredientData && (
             <>
               <View style={[styles.table, { borderColor: iconColor }]}>
                 {Object.entries(ingredientData).map(([key, value]) => (
@@ -95,7 +100,7 @@ export default function ScanScreen() {
                   </View>
                 ))}
               </View>
-              <Button
+              <ThemedButton
                 title={
                   addIngredientPending
                     ? "Saving..."
@@ -103,38 +108,17 @@ export default function ScanScreen() {
                       ? "Saved!"
                       : "Add Ingredient"
                 }
-                onPress={async () => {
-                  if (ingredientsSchema.safeParse(ingredientData).success) {
-                    addIngredient(ingredientData);
-                  }
-                }}
+                onPress={handleAddIngredient}
                 disabled={addIngredientPending || addIngredientSuccess}
               />
-              {addIngredientPending && (
-                <ThemedText style={{ textAlign: "center", marginTop: 8 }}>
-                  Saving ingredient...
-                </ThemedText>
-              )}
-              {addIngredientSuccess && (
-                <ThemedText
-                  style={{ textAlign: "center", marginTop: 8, color: "green" }}
-                >
-                  Ingredient saved!
-                </ThemedText>
-              )}
             </>
-          ) : (
+          )}
+          {!ingredientDataLoading && !ingredientData && (
             <ThemedText>No data found.</ThemedText>
           )}
         </ScrollView>
         {barcode && (
-          <Button
-            title="Scan Again"
-            onPress={() => {
-              resetAddIngredient();
-              setBarcode(null);
-            }}
-          />
+          <ThemedButton title="Scan Again" onPress={handleScanAgain} />
         )}
       </ThemedView>
     </SafeAreaView>
@@ -142,10 +126,15 @@ export default function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
+  flex1: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 16,
-    paddingBottom: 32,
+  },
+  justifyCenter: {
+    justifyContent: "center",
   },
   message: {
     textAlign: "center",
@@ -154,21 +143,21 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  buttonContainer: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "transparent",
-    margin: 64,
+  scrollView: {
+    marginTop: 16,
   },
-  button: {
-    flex: 1,
-    alignSelf: "flex-end",
-    alignItems: "center",
+  loadingText: {
+    textAlign: "center",
+    marginVertical: 16,
   },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
+  savingText: {
+    textAlign: "center",
+    marginTop: 8,
+  },
+  savedText: {
+    textAlign: "center",
+    marginTop: 8,
+    color: "green",
   },
   table: {
     borderWidth: 1,
