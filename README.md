@@ -1,50 +1,73 @@
-# Welcome to your Expo app 👋
+# My Secretary Agent
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile app built with Expo and React Native for scanning food product barcodes, retrieving ingredient data, and managing your food inventory. The app uses Convex as a backend for storing and querying food and ingredient data.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Scan food product barcodes (EAN-13, UPC-A, UPC-E, EAN-8)
+- Fetch ingredient details by barcode
+- Add new ingredients to your inventory
+- Themed UI with custom ThemedButton and ThemedText components
+- File-based routing for easy navigation
+
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/)
+- [pnpm](https://pnpm.io/) (or npm/yarn)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+
+### Installation
+
+1. Install dependencies:
 
    ```bash
+   pnpm install
+   # or
    npm install
    ```
 
-2. Start the app
+2. Start the development server:
 
    ```bash
+   pnpm start
+   # or
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Open the app:
+   - Use the QR code in your terminal to open in Expo Go on your device
+   - Or run in an Android/iOS simulator
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- `app/` - Main app source code (screens, API routes)
+- `components/` - Reusable UI components (ThemedButton, ThemedText, etc.)
+- `convex/` - Convex backend functions and schema
+- `hooks/` - Custom React hooks
+- `utils/` - Utility functions and schemas
 
-## Get a fresh project
+## Development
 
-When you're ready, run:
+- Edit screens in `app/(tabs)/`
+- Add new components in `components/`
+- Update backend logic in `convex/`
+
+### Resetting the Project
+
+To reset the app to a blank state:
 
 ```bash
-npm run reset-project
+pnpm run reset-project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Learn More
 
-## Learn more
+- [Expo Documentation](https://docs.expo.dev/)
+- [Convex Documentation](https://docs.convex.dev/)
+- [React Native](https://reactnative.dev/)
 
-To learn more about developing your project with Expo, look at the following resources:
+## License
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+MIT
