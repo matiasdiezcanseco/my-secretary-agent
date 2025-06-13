@@ -8,6 +8,11 @@ export default defineSchema({
     quantity: v.number(),
     date: v.string(),
     unit: v.string(),
+    calories: v.number(),
+    carbohydrates: v.number(),
+    fat: v.number(),
+    protein: v.number(),
+    ingredientId: v.string(), // ID of the ingredient in the database
   }),
   ingredients: defineTable({
     name: v.string(),

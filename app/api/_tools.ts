@@ -55,31 +55,93 @@ export const getFoodNutritionalInformation = tool({
   },
 });
 
+export const getIngredientByName = tool({
+  description: "Get ingredient details by name",
+  parameters: z.object({
+    name: z.string().describe("The name of the ingredient to search for"),
+  }),
+  execute: async ({ name }) => {
+    try {
+      const [ingredient] = await convex.query(
+        api.ingredients.getIngredientByName,
+        { name }
+      );
+
+      console.log("name:", name);
+      console.log("Ingredient found:", ingredient);
+
+      if (!ingredient) {
+        return {
+          success: false,
+          message: `No ingredient found with the name "${name}".`,
+        };
+      }
+
+      return {
+        success: true,
+        message: `Found ingredient: ${ingredient.name}`,
+        ingredient,
+      };
+    } catch (e) {
+      console.error("Error fetching ingredient:", e);
+      return {
+        success: false,
+        message: `Failed to fetch ingredient "${name}". Error: ${e instanceof Error ? e.message : "Unknown error"}`,
+        error: e instanceof Error ? e.message : "Unknown error",
+      };
+    }
+  },
+});
+
 export const addEatenFood = tool({
   description: "Add a food item to the list of eaten foods",
   parameters: z.object({
-    foodName: z.string().describe("The name of the food item to add"),
+    name: z.string().describe("The name of the food item to add"),
     quantity: z.number().describe("The quantity of the food item"),
     date: z.string().describe("The date when the food was eaten"),
     unit: z
-      .enum(["g", "lb", "oz"])
+      .enum(["g", "ml"])
       .describe("The unit of measurement for the food item (mass units)"),
+    ingredientId: z
+      .string()
+      .describe("The ID of the ingredient in the database"),
+    calories: z.number().describe("Calories in the food item"),
+    fat: z.number().describe("Grams of fat in the food item"),
+    protein: z.number().describe("Grams of protein in the food item"),
+    carbohydrates: z
+      .number()
+      .describe("Grams of carbohydrates in the food item"),
   }),
-  execute: async ({ foodName, date, quantity, unit }) => {
+  execute: async ({
+    name,
+    date,
+    quantity,
+    unit,
+    calories,
+    carbohydrates,
+    fat,
+    ingredientId,
+    protein,
+  }) => {
     try {
       const foodId = await convex.mutation(api.foods.addFood, {
-        name: foodName,
+        name,
         date,
         quantity,
         unit,
+        fat,
+        protein,
+        calories,
+        carbohydrates,
+        ingredientId,
       });
 
       return {
         success: true,
-        message: `Added ${foodName} to the list of eaten foods.`,
+        message: `Added ${name} to the list of eaten foods.`,
         addedFood: {
           id: foodId,
-          name: foodName,
+          name,
           date: date,
           quantity: quantity,
           unit: unit,
@@ -89,7 +151,7 @@ export const addEatenFood = tool({
       console.error("Error adding food:", e);
       return {
         success: false,
-        message: `Failed to add ${foodName} to the list of eaten foods. Error: ${e instanceof Error ? e.message : "Unknown error"}`,
+        message: `Failed to add ${name} to the list of eaten foods. Error: ${e instanceof Error ? e.message : "Unknown error"}`,
         error: e instanceof Error ? e.message : "Unknown error",
       };
     }
