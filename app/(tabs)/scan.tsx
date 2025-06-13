@@ -1,40 +1,32 @@
-import { Button, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Button, ScrollView, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useAddIngredient } from "@/hooks/useAddIngredient";
+import { useGetIngredientByBarcode } from "@/hooks/useGetIngredient";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { generateAPIUrl } from "@/utils/generate-api-url";
+import { ingredientsSchema } from "@/utils/schemas/ingredients";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
-import { fetch as expoFetch } from "expo/fetch";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ScanScreen() {
-  const backgroundColor = useThemeColor({}, "background");
-
-  const [facing, setFacing] = useState<CameraType>("back");
+  const [facing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [barcode, setBarcode] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  }
+  const { data: ingredientData } = useGetIngredientByBarcode({ barcode });
+  const {
+    mutate: addIngredient,
+    isPending: addIngredientPending,
+    isSuccess: addIngredientSuccess,
+    reset: resetAddIngredient,
+  } = useAddIngredient();
 
-  useEffect(() => {
-    const getData = async () => {
-      const data = await expoFetch(generateAPIUrl(`/api/scan?id=${barcode}`), {
-        method: "GET",
-      });
-      setData(await data.json());
-    };
-    if (barcode) {
-      getData();
-    }
-  }, [barcode]);
+  const iconColor = useThemeColor({}, "icon");
+  const backgroundColor = useThemeColor({}, "background");
 
   if (!permission || !permission.granted) {
-    // Camera permissions are not granted yet.
     return (
       <View style={styles.container}>
         <ThemedText style={styles.message}>
@@ -75,16 +67,7 @@ export default function ScanScreen() {
                 "upc_a",
               ],
             }}
-          >
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={toggleCameraFacing}
-              >
-                <ThemedText style={styles.text}>Flip Camera</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </CameraView>
+          ></CameraView>
         </View>
       </SafeAreaView>
     );
@@ -96,14 +79,63 @@ export default function ScanScreen() {
       edges={["top", "left", "right", "bottom"]}
     >
       <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>{barcode}</ThemedText>
-        <Button
-          title="Scan Again"
-          onPress={() => {
-            setBarcode(null);
-          }}
-        />
-        <ThemedText>{JSON.stringify(data)}</ThemedText>
+        <ScrollView style={{ marginTop: 16 }}>
+          {ingredientData ? (
+            <>
+              <View style={[styles.table, { borderColor: iconColor }]}>
+                {Object.entries(ingredientData).map(([key, value]) => (
+                  <View
+                    key={key}
+                    style={[styles.tableRow, { borderBottomColor: iconColor }]}
+                  >
+                    <ThemedText style={styles.tableCellKey}>{key}</ThemedText>
+                    <ThemedText style={styles.tableCellValue}>
+                      {String(value)}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+              <Button
+                title={
+                  addIngredientPending
+                    ? "Saving..."
+                    : addIngredientSuccess
+                      ? "Saved!"
+                      : "Add Ingredient"
+                }
+                onPress={async () => {
+                  if (ingredientsSchema.safeParse(ingredientData).success) {
+                    addIngredient(ingredientData);
+                  }
+                }}
+                disabled={addIngredientPending || addIngredientSuccess}
+              />
+              {addIngredientPending && (
+                <ThemedText style={{ textAlign: "center", marginTop: 8 }}>
+                  Saving ingredient...
+                </ThemedText>
+              )}
+              {addIngredientSuccess && (
+                <ThemedText
+                  style={{ textAlign: "center", marginTop: 8, color: "green" }}
+                >
+                  Ingredient saved!
+                </ThemedText>
+              )}
+            </>
+          ) : (
+            <ThemedText>No data found.</ThemedText>
+          )}
+        </ScrollView>
+        {barcode && (
+          <Button
+            title="Scan Again"
+            onPress={() => {
+              resetAddIngredient();
+              setBarcode(null);
+            }}
+          />
+        )}
       </ThemedView>
     </SafeAreaView>
   );
@@ -137,5 +169,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
+  },
+  table: {
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  tableCellKey: {
+    flex: 1,
+    fontWeight: "bold",
+  },
+  tableCellValue: {
+    flex: 2,
+    marginLeft: 8,
   },
 });

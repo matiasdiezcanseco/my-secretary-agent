@@ -1,6 +1,6 @@
+import { ingredientsSchema } from "@/utils/schemas/ingredients";
 import { openai } from "@ai-sdk/openai";
 import { generateText, Output } from "ai";
-import { z } from "zod";
 import { getFoodNutritionalInformation } from "./_tools";
 
 export async function GET(req: Request) {
@@ -20,17 +20,7 @@ export async function GET(req: Request) {
         - carbohydrates: Carbohydrates content in grams per 100g
       You can add extra information if you find it useful, but you must return at least the above information.`,
       experimental_output: Output.object({
-        schema: z.object({
-          name: z.string().describe("Name of the food product."),
-          calories: z
-            .number()
-            .describe("Calories in the food product per 100g."),
-          fat: z.number().describe("Fat content in grams per 100g."),
-          protein: z.number().describe("Protein content in grams per 100g."),
-          carbohydrates: z
-            .number()
-            .describe("Carbohydrates content in grams per 100g."),
-        }),
+        schema: ingredientsSchema,
       }),
       prompt: `The food product id is ${id}.`,
       tools: { getFoodNutritionalInformation },

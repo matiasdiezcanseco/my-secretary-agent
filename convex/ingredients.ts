@@ -48,6 +48,20 @@ export const addIngredient = mutation({
     ean_id: v.optional(v.string()), // Optional ID for the food item
   },
   handler: async (ctx, args) => {
+    // Check if the ingredient already exists by EAN ID
+    if (args.ean_id) {
+      const existingIngredient = await ctx.db
+        .query("ingredients")
+        .filter((q) => q.eq(q.field("ean_id"), args.ean_id))
+        .order("desc")
+        .take(1);
+
+      if (existingIngredient.length > 0) {
+        console.log("Ingredient already exists with EAN ID:", args.ean_id);
+        return existingIngredient[0]._id;
+      }
+    }
+
     const newIngredientId = await ctx.db.insert("ingredients", { ...args });
     return newIngredientId;
   },

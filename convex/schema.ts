@@ -17,6 +17,6 @@ export default defineSchema({
     carbohydrates: v.number(),
     unit: v.union(v.literal("g"), v.literal("ml")),
     quantity: v.number(),
-    ean_id: v.optional(v.string()), // Optional ID for the food item
+    ean_id: v.optional(v.string()), // Optional unique ID for the food item
   }),
 });
