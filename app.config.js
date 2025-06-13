@@ -14,12 +14,14 @@ export default {
       supportsTablet: true,
     },
     android: {
+      package: "com.matiasdiezcanseco.mysecretaryagent",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-    },    web: {
+    },
+    web: {
       bundler: "metro",
       output: "server",
       favicon: "./assets/images/favicon.png",
@@ -41,6 +43,9 @@ export default {
     },
     extra: {
       STT_SERVICE_URL: process.env.STT_SERVICE_URL,
+      eas: {
+        projectId: "bbe9be37-9994-48a6-be11-030d4091ce8a",
+      },
     },
   },
 };
