@@ -13,7 +13,7 @@ export async function GET(req: Request) {
       model: openai("gpt-4o"),
       system: `You recieve an id of a food product and you can use the tools to get their nutritional information. 
         You need to return at least the following information:
-        - productName: The name of the food product
+        - name: The name of the food product
         - calories: Calories in the food product per 100g
         - fat: Fat content in grams per 100g
         - protein: Protein content in grams per 100g
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       You can add extra information if you find it useful, but you must return at least the above information.`,
       experimental_output: Output.object({
         schema: z.object({
-          productName: z.string().describe("Name of the food product."),
+          name: z.string().describe("Name of the food product."),
           calories: z
             .number()
             .describe("Calories in the food product per 100g."),

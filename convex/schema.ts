@@ -9,4 +9,14 @@ export default defineSchema({
     date: v.string(),
     unit: v.string(),
   }),
+  ingredients: defineTable({
+    name: v.string(),
+    calories: v.number(),
+    fat: v.number(),
+    protein: v.number(),
+    carbohydrates: v.number(),
+    unit: v.union(v.literal("g"), v.literal("ml")),
+    quantity: v.number(),
+    ean_id: v.optional(v.string()), // Optional ID for the food item
+  }),
 });
