@@ -1,4 +1,5 @@
 import { generateAPIUrl } from "@/utils/generate-api-url";
+import { useMutation } from "@tanstack/react-query";
 import { AudioModule, RecordingPresets, useAudioRecorder } from "expo-audio";
 import { fetch as expoFetch } from "expo/fetch";
 import { useEffect, useState } from "react";
@@ -10,38 +11,41 @@ export function useAudioRecording({
   onTranscription: (text: string) => void;
 }) {
   const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const transcribeAudioFile = async (audioUri: string): Promise<string> => {
-    try {
-      const response = await fetch(audioUri);
-      const audioBlob = await response.blob();
+    const response = await fetch(audioUri);
+    const audioBlob = await response.blob();
 
-      const transcribeResponse = await expoFetch(
-        generateAPIUrl("/api/transcribe"),
-        {
-          method: "POST",
-          body: audioBlob,
-          headers: {
-            "Content-Type": "audio/mpeg",
-          },
-        }
-      );
-
-      if (!transcribeResponse.ok) {
-        throw new Error(
-          `Transcription failed: ${transcribeResponse.statusText}`
-        );
+    const transcribeResponse = await expoFetch(
+      generateAPIUrl("/api/transcribe"),
+      {
+        method: "POST",
+        body: audioBlob,
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
       }
+    );
 
-      const transcription = await transcribeResponse.text();
-      return transcription.trim();
-    } catch (error) {
-      console.error("Error transcribing audio:", error);
-      throw error;
+    if (!transcribeResponse.ok) {
+      throw new Error(`Transcription failed: ${transcribeResponse.statusText}`);
     }
+
+    const transcription = await transcribeResponse.text();
+    return transcription.trim();
   };
+
+  const { mutate: transcribe, isPending: isTranscribing } = useMutation({
+    mutationFn: transcribeAudioFile,
+    onSuccess: (transcription) => {
+      onTranscription(transcription);
+    },
+    onError: (error) => {
+      console.error("Error transcribing audio:", error);
+      Alert.alert("Error", "Failed to transcribe audio");
+    },
+  });
 
   useEffect(() => {
     (async () => {
@@ -69,18 +73,11 @@ export function useAudioRecording({
       setIsRecording(false);
 
       if (audioRecorder.uri) {
-        setIsTranscribing(true);
-        try {
-          const transcription = await transcribeAudioFile(audioRecorder.uri);
-          onTranscription(transcription);
-        } finally {
-          setIsTranscribing(false);
-        }
+        transcribe(audioRecorder.uri);
       }
     } catch (error) {
       console.error("Error stopping recording:", error);
       Alert.alert("Error", "Failed to process recording");
-      setIsTranscribing(false);
     }
   };
 

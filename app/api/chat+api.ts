@@ -1,16 +1,30 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
-import { addEatenFood, getCurrentIsoTime, getCurrentLocalTime } from "./_tools";
+import {
+  addEatenFood,
+  addIngredient,
+  getAllEatenFoods,
+  getCurrentIsoTime,
+  getCurrentLocalTime,
+  getIngredientByName,
+} from "./_tools";
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
   try {
     const result = streamText({
-      maxSteps: 5,
+      maxSteps: 15,
       model: openai("gpt-4o"),
       messages,
-      tools: { getCurrentIsoTime, addEatenFood, getCurrentLocalTime },
+      tools: {
+        getCurrentIsoTime,
+        addEatenFood,
+        getCurrentLocalTime,
+        getIngredientByName,
+        addIngredient,
+        getAllEatenFoods,
+      },
     });
     return result.toDataStreamResponse({
       headers: {

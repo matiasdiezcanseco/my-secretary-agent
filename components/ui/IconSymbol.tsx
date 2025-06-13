@@ -23,6 +23,7 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   "mic.fill": "mic",
   "ellipses.bubble.fill": "chat",
+  "scanner.fill": "qr-code-scanner",
 } as IconMapping;
 
 /**
