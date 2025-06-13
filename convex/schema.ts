@@ -12,7 +12,7 @@ export default defineSchema({
     carbohydrates: v.number(),
     fat: v.number(),
     protein: v.number(),
-    ingredientId: v.string(), // ID of the ingredient in the database
+    ingredient_id: v.string(), // ID of the ingredient in the database
   }),
   ingredients: defineTable({
     name: v.string(),

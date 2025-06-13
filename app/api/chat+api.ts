@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import {
   addEatenFood,
+  addIngredient,
   getCurrentIsoTime,
   getCurrentLocalTime,
   getIngredientByName,
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
         addEatenFood,
         getCurrentLocalTime,
         getIngredientByName,
+        addIngredient,
       },
     });
     return result.toDataStreamResponse({

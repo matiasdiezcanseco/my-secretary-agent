@@ -93,6 +93,48 @@ export const getIngredientByName = tool({
   },
 });
 
+export const addIngredient = tool({
+  description: "Add a new ingredient to the database",
+  parameters: z.object({
+    name: z.string().describe("The name of the ingredient"),
+    calories: z.number().describe("Calories in the ingredient"),
+    fat: z.number().describe("Grams of fat in the ingredient"),
+    protein: z.number().describe("Grams of protein in the ingredient"),
+    carbohydrates: z
+      .number()
+      .describe("Grams of carbohydrates in the ingredient"),
+    unit: z
+      .enum(["g", "ml"])
+      .describe("The unit of measurement for the ingredient (mass units)"),
+    quantity: z.number().describe("Quantity of the ingredient"),
+    ean_id: z
+      .string()
+      .optional()
+      .describe("Optional unique ID for the food item (EAN code)"),
+  }),
+  execute: async (args) => {
+    try {
+      const ingredientId = await convex.mutation(
+        api.ingredients.addIngredient,
+        args
+      );
+
+      return {
+        success: true,
+        message: `Added ingredient ${args.name} to the database.`,
+        addedIngredient: { args, id: ingredientId },
+      };
+    } catch (e) {
+      console.error("Error adding ingredient:", e);
+      return {
+        success: false,
+        message: `Failed to add ingredient ${name}. Error: ${e instanceof Error ? e.message : "Unknown error"}`,
+        error: e instanceof Error ? e.message : "Unknown error",
+      };
+    }
+  },
+});
+
 export const addEatenFood = tool({
   description: "Add a food item to the list of eaten foods",
   parameters: z.object({
@@ -102,7 +144,7 @@ export const addEatenFood = tool({
     unit: z
       .enum(["g", "ml"])
       .describe("The unit of measurement for the food item (mass units)"),
-    ingredientId: z
+    ingredient_id: z
       .string()
       .describe("The ID of the ingredient in the database"),
     calories: z.number().describe("Calories in the food item"),
@@ -120,12 +162,12 @@ export const addEatenFood = tool({
     calories,
     carbohydrates,
     fat,
-    ingredientId,
+    ingredient_id,
     protein,
   }) => {
     try {
       const foodId = await convex.mutation(api.foods.addFood, {
-        name,
+        name: name.toLowerCase(),
         date,
         quantity,
         unit,
@@ -133,7 +175,7 @@ export const addEatenFood = tool({
         protein,
         calories,
         carbohydrates,
-        ingredientId,
+        ingredient_id,
       });
 
       return {
