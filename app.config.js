@@ -42,7 +42,6 @@ export default {
       typedRoutes: true,
     },
     extra: {
-      STT_SERVICE_URL: process.env.STT_SERVICE_URL,
       eas: {
         projectId: "bbe9be37-9994-48a6-be11-030d4091ce8a",
       },
